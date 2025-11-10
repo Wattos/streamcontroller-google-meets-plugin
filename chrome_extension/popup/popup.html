@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Google Meet StreamController Bridge</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 350px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-size: 14px;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1a73e8;
+    }
+
+    .section {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .status-label {
+      font-weight: 500;
+      color: #555;
+    }
+
+    .status-value {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-indicator.connected {
+      background-color: #00aa00;
+    }
+
+    .status-indicator.connecting {
+      background-color: #ffa500;
+    }
+
+    .status-indicator.disconnected {
+      background-color: #999;
+    }
+
+    .status-indicator.error {
+      background-color: #ff0000;
+    }
+
+    .state-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .state-icon {
+      font-size: 16px;
+      margin-right: 8px;
+    }
+
+    .state-enabled {
+      color: #00aa00;
+      font-weight: 600;
+    }
+
+    .state-disabled {
+      color: #999;
+    }
+
+    .button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .button:last-child {
+      margin-bottom: 0;
+    }
+
+    .button-primary {
+      background-color: #1a73e8;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background-color: #1557b0;
+    }
+
+    .button-secondary {
+      background-color: #f1f3f4;
+      color: #333;
+    }
+
+    .button-secondary:hover {
+      background-color: #e8eaed;
+    }
+
+    .button-danger {
+      background-color: #d93025;
+      color: white;
+    }
+
+    .button-danger:hover {
+      background-color: #b31412;
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .settings-row {
+      margin-bottom: 12px;
+    }
+
+    .settings-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .settings-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .settings-input:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .checkbox-row label {
+      cursor: pointer;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .error-text {
+      font-size: 12px;
+      color: #d93025;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎙️ Google Meet Bridge</h1>
+
+  <!-- Connection Status Section -->
+  <div class="section">
+    <div class="section-title">Connection</div>
+    <div class="status-row">
+      <span class="status-label">StreamController</span>
+      <span class="status-value">
+        <span id="connection-indicator" class="status-indicator disconnected"></span>
+        <span id="connection-status">Disconnected</span>
+      </span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Meeting</span>
+      <span class="status-value">
+        <span id="meeting-status">Not in meeting</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Meeting State Section -->
+  <div class="section" id="meeting-state-section" style="display: none;">
+    <div class="section-title">Current State</div>
+    <div class="state-item">
+      <span><span class="state-icon">🎤</span> Microphone</span>
+      <span id="mic-state" class="state-disabled">OFF</span>
+    </div>
+    <div class="state-item">
+      <span><span class="state-icon">📹</span> Camera</span>
+      <span id="camera-state" class="state-disabled">OFF</span>
+    </div>
+    <div class="state-item">
+      <span><span class="state-icon">✋</span> Hand</span>
+      <span id="hand-state" class="state-disabled">Lowered</span>
+    </div>
+  </div>
+
+  <!-- Controls Section -->
+  <div class="section">
+    <div class="section-title">Controls</div>
+    <button id="connect-button" class="button button-primary">Connect to StreamController</button>
+    <button id="disconnect-button" class="button button-danger" style="display: none;">Disconnect</button>
+  </div>
+
+  <!-- Settings Section -->
+  <div class="section">
+    <div class="section-title">Settings</div>
+    <div class="settings-row">
+      <label class="settings-label">WebSocket Host</label>
+      <input type="text" id="ws-host" class="settings-input" value="127.0.0.1" />
+    </div>
+    <div class="settings-row">
+      <label class="settings-label">WebSocket Port</label>
+      <input type="number" id="ws-port" class="settings-input" value="8765" min="1" max="65535" />
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="auto-connect" checked />
+      <label for="auto-connect">Auto-connect on startup</label>
+    </div>
+    <button id="save-settings" class="button button-secondary">Save Settings</button>
+    <p class="info-text">Changes require reconnection to take effect.</p>
+  </div>
+
+  <!-- Info Section -->
+  <div class="section">
+    <div class="section-title">About</div>
+    <p class="info-text">
+      This extension bridges Google Meet with StreamController, allowing you to control your
+      microphone, camera, and reactions from your Stream Deck.
+    </p>
+    <p class="info-text" style="margin-top: 8px;">
+      <strong>Version:</strong> 1.0.0<br>
+      <strong>Status:</strong> <span id="extension-status">Active</span>
+    </p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

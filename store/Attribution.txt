@@ -1,0 +1,7 @@
+Google Meet StreamController Plugin
+Copyright 2025 Wattos
+
+Icon placeholders used during development.
+Proper icons need to be created for production release.
+
+See assets/ASSETS_NEEDED.md for icon requirements.

@@ -1,0 +1,28 @@
+{
+  "pending": {},
+  "authorized": {
+    "dedamkkaeadegdogcdeaoklllmgkjkem:859df616-406e-4fa9-af41-52645494bc59": {
+      "extension_id": "dedamkkaeadegdogcdeaoklllmgkjkem",
+      "instance_id": "859df616-406e-4fa9-af41-52645494bc59",
+      "public_key": {
+        "crv": "P-256",
+        "ext": true,
+        "key_ops": [
+          "verify"
+        ],
+        "kty": "EC",
+        "x": "TxXa4j6wTPMcUv03-hHDz7EXVcdrqx1m-_jOP_d6FbI",
+        "y": "J2qZEATC0um4NG_Ja_CxFXVJ4ZISeQmlKhQ280-JXNE"
+      },
+      "metadata": {
+        "extension_name": "Google Meet StreamController Bridge",
+        "extension_version": "1.0.0",
+        "browser_name": "Google Chrome",
+        "browser_version": "141.0.0.0",
+        "os": "Linux",
+        "timestamp": 1762684920932
+      },
+      "timestamp": 1762684920.9328148
+    }
+  }
+}
