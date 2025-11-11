@@ -22,9 +22,15 @@ Control Google Meet from your Stream Deck and see the Google Meet status in real
    git clone https://github.com/Wattos/streamcontroller-google-meets-plugin.git
    ```
 
-2. Install the Chrome extension (see `chrome-extension/` directory)
+2. Restart StreamController (the Chrome extension will be automatically downloaded during first launch)
 
-3. Restart StreamController
+3. Install the Chrome extension:
+   - The extension is automatically downloaded to `~/.local/share/StreamController/plugins/streamcontroller-google-meets-plugin/dist/chrome_extension/`
+   - Open Chrome and go to `chrome://extensions`
+   - Enable "Developer mode" (toggle in top right)
+   - Click "Load unpacked"
+   - Select the `dist/chrome_extension` folder from the plugin directory
+   - The extension will connect to StreamController automatically
 
 ## Architecture
 
@@ -61,6 +67,8 @@ Control Google Meet from your Stream Deck and see the Google Meet status in real
 All actions extend `GoogleMeetActionBase` and use the mixin pattern for reusable behavior.
 
 ## Chrome Extension
+
+The Chrome extension is **automatically downloaded** to `dist/chrome_extension/` during plugin installation. You just need to load it as an unpacked extension in Chrome (see Installation section above).
 
 The Chrome extension provides secure communication between Google Meet and StreamController:
 
@@ -186,6 +194,8 @@ This project uses automated CI/CD for releases. When a version bump is merged to
 2. **Package**: Both Chrome extension and StreamController plugin are packaged as .zip files
 3. **Publish to Chrome Web Store**: Extension is automatically uploaded and published
 4. **Create GitHub Release**: Release is created with both packages attached
+
+**Note for Users**: You don't need to manually download the Chrome extension from releases! It's automatically downloaded when you install the plugin (see Installation section above).
 
 ### Creating a Release
 

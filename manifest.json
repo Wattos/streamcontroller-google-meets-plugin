@@ -7,7 +7,7 @@
   "github": "https://github.com/Wattos/streamcontroller-google-meets-plugin",
   "thumbnail": "store/Thumbnail.png",
   "descriptions": {
-    "en_US": "Control Google Meet from StreamController - toggle microphone, camera, raise hand, and send reactions from your Stream Deck. Features real-time state synchronization with Google Meet via a secure Chrome extension bridge. Perfect for streamers, remote workers, and anyone who wants physical button control over their video meetings."
+    "en_US": "Control Google Meet from StreamController - toggle microphone, camera, raise hand, and send reactions from your Stream Deck. Features real-time state synchronization with Google Meet via a secure Chrome extension bridge. The Chrome extension is automatically downloaded during installation to dist/chrome_extension/ - simply load it as an unpacked extension in Chrome. Perfect for streamers, remote workers, and anyone who wants physical button control over their video meetings."
   },
   "short-descriptions": {
     "en_US": "Control Google Meet (mic, camera, hand, reactions) from your Stream Deck with real-time sync."

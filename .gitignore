@@ -166,3 +166,6 @@ VERSION
 google-meet-streamcontroller-extension-*.zip
 google-meet-streamcontroller-plugin-*.zip
 chrome-extension.zip
+
+# Downloaded Chrome extension
+dist/
