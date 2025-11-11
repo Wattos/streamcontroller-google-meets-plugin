@@ -16,16 +16,9 @@ Control Google Meet from your Stream Deck and see the Google Meet status in real
 
 ## Installation
 
-1. Clone this plugin into your StreamController plugins directory:
-   ```bash
-   cd ~/.local/share/StreamController/plugins/
-   git clone https://github.com/Wattos/streamcontroller-google-meets-plugin.git
-   ```
-
-2. Restart StreamController (the Chrome extension will be automatically downloaded during first launch)
-
-3. Install the Chrome extension:
-   - The extension is automatically downloaded to `~/.local/share/StreamController/plugins/streamcontroller-google-meets-plugin/dist/chrome_extension/`
+1. Install the Plugin from the StreamController official store
+2. Install the Chrome extension:
+   - The extension is automatically downloaded into the plugin folder. The folder is `dist/chrome_extension`. (Alternatively, you can download the extension manually from the release page and extract it somewhere).
    - Open Chrome and go to `chrome://extensions`
    - Enable "Developer mode" (toggle in top right)
    - Click "Load unpacked"
@@ -168,79 +161,6 @@ The token payload contains:
 Actions can be configured with:
 - WebSocket port (default: 8765)
 - Reaction selection (for SendReaction action)
-
-## Development
-
-### Project Structure
-```
-.
-├── actions/              # StreamController action implementations
-├── backend/              # WebSocket server and authentication
-├── chrome_extension/     # Browser extension for Google Meet integration
-├── assets/               # Icons and images
-├── docs/                 # Documentation and screenshots
-├── main.py               # Plugin registration
-├── manifest.json         # Plugin metadata
-└── README.md
-```
-
-## Release Process
-
-This project uses automated CI/CD for releases. When a version bump is merged to main, the following happens automatically:
-
-### Automated Release Workflow
-
-1. **Build**: Chrome extension is built with Vite
-2. **Package**: Both Chrome extension and StreamController plugin are packaged as .zip files
-3. **Publish to Chrome Web Store**: Extension is automatically uploaded and published
-4. **Create GitHub Release**: Release is created with both packages attached
-
-**Note for Users**: You don't need to manually download the Chrome extension from releases! It's automatically downloaded when you install the plugin (see Installation section above).
-
-### Creating a Release
-
-```bash
-# Navigate to chrome_extension directory
-cd chrome_extension
-
-# Bump version (choose one)
-# This updates BOTH Chrome extension AND StreamController plugin versions
-npm run version:patch   # 1.0.0 → 1.0.1
-npm run version:minor   # 1.0.0 → 1.1.0
-npm run version:major   # 1.0.0 → 2.0.0
-
-# Commit and push
-git add .
-git commit -m "chore: bump version to v1.0.1"
-git push origin your-branch
-
-# Create and merge PR
-# GitHub Actions will automatically handle the release
-```
-
-### Manual Release (Local Testing)
-
-```bash
-cd chrome_extension
-
-# Build and package everything
-npm run release
-
-# Output files:
-# - google-meet-streamcontroller-extension-{version}.zip
-# - google-meet-streamcontroller-plugin-{version}.zip
-```
-
-### Required GitHub Secrets
-
-For automated publishing, add these secrets to your GitHub repository:
-
-- `CHROME_EXTENSION_ID` - Your Chrome Web Store extension ID
-- `CHROME_CLIENT_ID` - OAuth2 client ID
-- `CHROME_CLIENT_SECRET` - OAuth2 client secret
-- `CHROME_REFRESH_TOKEN` - OAuth2 refresh token
-
-See `scripts/setup-chrome-credentials.md` for detailed setup instructions.
 
 ## License
 
