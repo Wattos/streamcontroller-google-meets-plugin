@@ -76,26 +76,8 @@ jobs:
 
       - name: Package Chrome extension
         run: |
+          chmod +x scripts/package-extension.sh
           ./scripts/package-extension.sh
-
-      - name: Publish to Chrome Web Store
-        env:
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-        run: |
-          # Install chrome-webstore-upload-cli
-          npm install -g chrome-webstore-upload-cli
-
-          # Upload to Chrome Web Store
-          chrome-webstore-upload upload \
-            --source chrome-extension.zip \
-            --extension-id "$CHROME_EXTENSION_ID" \
-            --client-id "$CHROME_CLIENT_ID" \
-            --client-secret "$CHROME_CLIENT_SECRET" \
-            --refresh-token "$CHROME_REFRESH_TOKEN" \
-            --auto-publish
 
       - name: Package StreamController plugin
         run: |
@@ -146,9 +128,28 @@ jobs:
             google-meet-streamcontroller-extension-${VERSION}.zip \
             google-meet-streamcontroller-plugin-${VERSION}.zip
 
+      - name: Publish to Chrome Web Store
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          # Install chrome-webstore-upload-cli
+          npm install -g chrome-webstore-upload-cli
+
+          # Upload to Chrome Web Store
+          chrome-webstore-upload upload \
+            --source chrome-extension.zip \
+            --extension-id "$CHROME_EXTENSION_ID" \
+            --client-id "$CHROME_CLIENT_ID" \
+            --client-secret "$CHROME_CLIENT_SECRET" \
+            --refresh-token "$CHROME_REFRESH_TOKEN" \
+            --auto-publish
+
       - name: Notify success
         if: success()
         run: |
           echo "✅ Release v${{ needs.check-version.outputs.new_version }} published successfully!"
-          echo "- Chrome Web Store: Updated"
           echo "- GitHub Release: Created"
+          echo "- Chrome Web Store: Updated"
