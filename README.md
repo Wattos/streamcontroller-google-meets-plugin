@@ -17,7 +17,11 @@ Control Google Meet from your Stream Deck and see the Google Meet status in real
 ## Installation
 
 1. Install the Plugin from the StreamController official store
-2. Install the Chrome extension:
+2. Install the [Extension](https://chromewebstore.google.com/detail/google-meet-streamcontrol/fchfaaekblecknooaaoeppeomidamplm)
+
+
+### Manual Extension installation
+1. Install the Chrome extension:
    - The extension is automatically downloaded into the plugin folder. The folder is `dist/chrome_extension`. (Alternatively, you can download the extension manually from the release page and extract it somewhere).
    - Open Chrome and go to `chrome://extensions`
    - Enable "Developer mode" (toggle in top right)
