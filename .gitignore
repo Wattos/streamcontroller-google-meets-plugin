@@ -160,3 +160,9 @@ cython_debug/
 #.idea/
 
 VERSION
+
+# Release artifacts
+*.zip
+google-meet-streamcontroller-extension-*.zip
+google-meet-streamcontroller-plugin-*.zip
+chrome-extension.zip

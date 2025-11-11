@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release even without version bump'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check.outputs.changed }}
+      new_version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Get current version from manifest
+          CURRENT_VERSION=$(jq -r '.version' chrome_extension/manifest.json)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Get previous version (from previous commit)
+          git checkout HEAD~1 -- chrome_extension/manifest.json 2>/dev/null || echo "No previous version"
+          PREVIOUS_VERSION=$(jq -r '.version' chrome_extension/manifest.json 2>/dev/null || echo "0.0.0")
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          # Restore current version
+          git checkout HEAD -- chrome_extension/manifest.json
+
+          # Check if version changed or force release
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ] || [ "${{ github.event.inputs.force_release }}" = "true" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No version change detected"
+          fi
+
+  build-and-release:
+    needs: check-version
+    if: needs.check-version.outputs.version_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: chrome_extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: chrome_extension
+        run: npm ci
+
+      - name: Build Chrome extension
+        working-directory: chrome_extension
+        run: npm run build
+
+      - name: Package Chrome extension
+        run: |
+          ./scripts/package-extension.sh
+
+      - name: Publish to Chrome Web Store
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          # Install chrome-webstore-upload-cli
+          npm install -g chrome-webstore-upload-cli
+
+          # Upload to Chrome Web Store
+          chrome-webstore-upload upload \
+            --source chrome-extension.zip \
+            --extension-id "$CHROME_EXTENSION_ID" \
+            --client-id "$CHROME_CLIENT_ID" \
+            --client-secret "$CHROME_CLIENT_SECRET" \
+            --refresh-token "$CHROME_REFRESH_TOKEN" \
+            --auto-publish
+
+      - name: Package StreamController plugin
+        run: |
+          chmod +x scripts/package-plugin.sh
+          ./scripts/package-plugin.sh
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.check-version.outputs.new_version }}"
+
+          # Generate release notes
+          RELEASE_NOTES=$(cat <<EOF
+          ## Google Meet StreamController Plugin v${VERSION}
+
+          ### Downloads
+          - **Chrome Extension**: Download \`google-meet-streamcontroller-extension-${VERSION}.zip\`
+          - **StreamController Plugin**: Download \`google-meet-streamcontroller-plugin-${VERSION}.zip\`
+
+          ### Installation
+
+          #### Chrome Extension
+          1. Download \`google-meet-streamcontroller-extension-${VERSION}.zip\`
+          2. Unzip the file
+          3. Open Chrome and go to \`chrome://extensions\`
+          4. Enable "Developer mode"
+          5. Click "Load unpacked" and select the unzipped folder
+
+          #### StreamController Plugin
+          1. Download \`google-meet-streamcontroller-plugin-${VERSION}.zip\`
+          2. Extract to your StreamController plugins directory:
+             \`~/.local/share/StreamController/plugins/\`
+          3. Restart StreamController
+
+          ### Chrome Web Store
+          This extension is also available on the Chrome Web Store and will be updated automatically.
+
+          ### Changes
+          See commit history for detailed changes.
+          EOF
+          )
+
+          # Create release
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "$RELEASE_NOTES" \
+            google-meet-streamcontroller-extension-${VERSION}.zip \
+            google-meet-streamcontroller-plugin-${VERSION}.zip
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Release v${{ needs.check-version.outputs.new_version }} published successfully!"
+          echo "- Chrome Web Store: Updated"
+          echo "- GitHub Release: Created"

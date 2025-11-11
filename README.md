@@ -1,6 +1,8 @@
 # Google Meet Controller Plugin for StreamController
 
-Control Google Meet from your Stream Deck with real-time state synchronization!
+Control Google Meet from your Stream Deck and see the Google Meet status in real time!
+
+![Stream Deck Page Example](docs/StreamDeckPage.png)
 
 ## Features
 
@@ -8,12 +10,23 @@ Control Google Meet from your Stream Deck with real-time state synchronization!
 - **Toggle Camera** - Turn camera on/off with state display
 - **Raise/Lower Hand** - Raise your hand in meetings
 - **Send Reactions** - Send emoji reactions (💖 👍 🎉 👏 😂 😮 😢 🤔 👎)
-- **Real-time Sync** - Button states update automatically based on actual meeting state
-- **Secure Communication** - JWS ES256 authenticated WebSocket with instance-based approval
+- **Meeting Status** - Display showing whether you're currently in a meeting (read-only)
+- **Participant Count** - Real-time participant count display (read-only)
+- **Leave Call** - Leave the current meeting with a single button press
+
+## Installation
+
+1. Clone this plugin into your StreamController plugins directory:
+   ```bash
+   cd ~/.local/share/StreamController/plugins/
+   git clone https://github.com/Wattos/streamcontroller-google-meets-plugin.git
+   ```
+
+2. Install the Chrome extension (see `chrome-extension/` directory)
+
+3. Restart StreamController
 
 ## Architecture
-
-This plugin follows a clean separation of concerns:
 
 ### Backend (`backend/`)
 - **auth/**: Authentication and pairing management
@@ -29,7 +42,11 @@ This plugin follows a clean separation of concerns:
 - **Backend**: Wrapper that exposes clean API to StreamController actions
   - `toggle_microphone()`, `toggle_camera()`, `toggle_hand()`
   - `send_reaction(reaction)`
-  - `get_state()` - returns current mic/camera/hand state
+  - `leave_call()` - leave the current meeting
+  - `get_state()` - returns current mic/camera/hand/meeting state
+  - `get_mic_enabled()`, `get_camera_enabled()`, `get_hand_raised()`
+  - `get_in_meeting()` - check if currently in a meeting
+  - `get_participant_count()` - get number of participants
   - `approve_instance()`, `deny_instance()`, `revoke_instance()`
 
 ### Actions (`actions/`)
@@ -37,20 +54,11 @@ This plugin follows a clean separation of concerns:
 - **ToggleCamera**: Toggle camera with ON/OFF state display
 - **RaiseHand**: Raise/lower hand with RAISED state display
 - **SendReaction**: Send reactions with configurable reaction selection
+- **InMeetingStatus**: Read-only display showing meeting status (IN MEETING / NOT IN MEETING)
+- **ParticipantCount**: Read-only display showing real-time participant count
+- **LeaveCall**: Leave the current meeting with visual feedback
 
 All actions extend `GoogleMeetActionBase` and use the mixin pattern for reusable behavior.
-
-## Installation
-
-1. Clone this plugin into your StreamController plugins directory:
-   ```bash
-   cd ~/.local/share/StreamController/plugins/
-   git clone https://github.com/Wattos/streamcontroller-google-meets-plugin.git
-   ```
-
-2. Install the Chrome extension (see `chrome-extension/` directory)
-
-3. Restart StreamController
 
 ## Chrome Extension
 
@@ -117,7 +125,6 @@ All non-handshake messages include JWS token:
     "camera_enabled": false,
     "hand_raised": false,
     "in_meeting": true,
-    "meeting_name": "Team Standup",
     "participant_count": 5
   },
   "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -159,86 +166,72 @@ Actions can be configured with:
 ### Project Structure
 ```
 .
-├── actions/
-│   ├── mixins/              # Reusable action behaviors
-│   ├── GoogleMeetActionBase.py  # Base class for all actions
-│   ├── ToggleMic.py
-│   ├── ToggleCamera.py
-│   ├── RaiseHand.py
-│   └── SendReaction.py
-├── backend/
-│   ├── auth/                # Authentication modules
-│   │   ├── crypto_manager.py   # JWS ES256 crypto operations
-│   │   ├── pairing_manager.py  # Instance pairing management
-│   │   └── __init__.py
-│   ├── GoogleMeetsController.py  # WebSocket server
-│   ├── backend.py                # Backend wrapper
-│   └── requirements.txt
-├── chrome_extension/
-│   ├── src/
-│   │   ├── streamcontroller-client/  # Reusable client abstraction
-│   │   │   ├── index.js             # Main StreamControllerClient
-│   │   │   ├── websocket-manager.js
-│   │   │   ├── pairing-manager.js
-│   │   │   ├── auth-manager.js      # ES256 key & JWS signing
-│   │   │   └── metadata-collector.js
-│   │   ├── google-meet/             # Feature modules
-│   │   │   ├── core/               # Shared utilities
-│   │   │   │   ├── dom-utils.js
-│   │   │   │   ├── button-controller.js
-│   │   │   │   └── observer.js
-│   │   │   ├── microphone.js
-│   │   │   ├── camera.js
-│   │   │   ├── hand-raising.js
-│   │   │   ├── reactions.js
-│   │   │   └── meeting-info.js
-│   │   ├── background.js           # Service worker
-│   │   └── content.js              # Main coordinator
-│   ├── manifest.json
-│   └── README.md
-├── assets/               # Icons
-├── main.py              # Plugin registration
-├── manifest.json        # Plugin metadata
+├── actions/              # StreamController action implementations
+├── backend/              # WebSocket server and authentication
+├── chrome_extension/     # Browser extension for Google Meet integration
+├── assets/               # Icons and images
+├── docs/                 # Documentation and screenshots
+├── main.py               # Plugin registration
+├── manifest.json         # Plugin metadata
 └── README.md
-
 ```
 
-### Icons
+## Release Process
 
-Currently using placeholder icons. See `assets/ASSETS_NEEDED.md` for details on required icons.
+This project uses automated CI/CD for releases. When a version bump is merged to main, the following happens automatically:
 
-### Testing
+### Automated Release Workflow
 
-1. **Without extension**: Plugin will show "No Connection" status
-2. **With extension**:
-   - Install extension in Chrome
-   - Join a Google Meet
-   - Extension will request pairing
-   - Approve in StreamController settings
-   - Test mic/camera/hand/reaction controls
+1. **Build**: Chrome extension is built with Vite
+2. **Package**: Both Chrome extension and StreamController plugin are packaged as .zip files
+3. **Publish to Chrome Web Store**: Extension is automatically uploaded and published
+4. **Create GitHub Release**: Release is created with both packages attached
 
-3. **With mock extension**: Create a test WebSocket client that:
-   - Generates ES256 key pair
-   - Connects to ws://127.0.0.1:8765
-   - Sends handshake with public key and metadata
-   - Signs all messages with JWS
-   - Responds to commands
-   - Sends state updates
+### Creating a Release
 
-## TODO
+```bash
+# Navigate to chrome_extension directory
+cd chrome_extension
 
-- [x] Implement Chrome extension with modular architecture
-- [x] Implement JWS ES256 authentication
-- [x] Implement instance-based pairing
-- [ ] Create proper icon assets
-- [ ] Add localization support
-- [ ] Add comprehensive testing suite
-- [ ] Add logging/debugging options
+# Bump version (choose one)
+# This updates BOTH Chrome extension AND StreamController plugin versions
+npm run version:patch   # 1.0.0 → 1.0.1
+npm run version:minor   # 1.0.0 → 1.1.0
+npm run version:major   # 1.0.0 → 2.0.0
+
+# Commit and push
+git add .
+git commit -m "chore: bump version to v1.0.1"
+git push origin your-branch
+
+# Create and merge PR
+# GitHub Actions will automatically handle the release
+```
+
+### Manual Release (Local Testing)
+
+```bash
+cd chrome_extension
+
+# Build and package everything
+npm run release
+
+# Output files:
+# - google-meet-streamcontroller-extension-{version}.zip
+# - google-meet-streamcontroller-plugin-{version}.zip
+```
+
+### Required GitHub Secrets
+
+For automated publishing, add these secrets to your GitHub repository:
+
+- `CHROME_EXTENSION_ID` - Your Chrome Web Store extension ID
+- `CHROME_CLIENT_ID` - OAuth2 client ID
+- `CHROME_CLIENT_SECRET` - OAuth2 client secret
+- `CHROME_REFRESH_TOKEN` - OAuth2 refresh token
+
+See `scripts/setup-chrome-credentials.md` for detailed setup instructions.
 
 ## License
 
 MIT License - See LICENSE file
-
-## Credits
-
-Built following StreamController plugin architecture patterns from the [OBS Plugin](https://github.com/StreamController/OBSPlugin).

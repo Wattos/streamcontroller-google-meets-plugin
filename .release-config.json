@@ -1,0 +1,59 @@
+{
+  "extension": {
+    "name": "google-meet-streamcontroller-extension",
+    "source": "chrome_extension/dist",
+    "exclude": [
+      "*.map",
+      "*.DS_Store",
+      "node_modules",
+      "src",
+      ".vscode"
+    ]
+  },
+  "plugin": {
+    "name": "google-meet-streamcontroller-plugin",
+    "include": [
+      "actions/",
+      "backend/",
+      "assets/",
+      "store/",
+      "docs/",
+      "chrome_extension/dist/",
+      "chrome_extension/icons/",
+      "chrome_extension/popup/",
+      "chrome_extension/manifest.json",
+      "chrome_extension/README.md",
+      "chrome_extension/INSTALL.md",
+      "main.py",
+      "manifest.json",
+      "__install__.py",
+      "LICENSE",
+      "README.md",
+      "attribution.json"
+    ],
+    "exclude": [
+      "**/__pycache__",
+      "**/*.pyc",
+      "**/*.map",
+      "**/.DS_Store",
+      "**/node_modules",
+      "backend/.venv",
+      "backend/pairing_data.json",
+      ".git",
+      ".github",
+      "scripts",
+      ".env",
+      "*.zip"
+    ]
+  },
+  "chromeWebStore": {
+    "autoPublish": true,
+    "targets": ["default"]
+  },
+  "github": {
+    "createRelease": true,
+    "draft": false,
+    "prerelease": false,
+    "generateReleaseNotes": true
+  }
+}

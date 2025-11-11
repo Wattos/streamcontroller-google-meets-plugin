@@ -5,8 +5,7 @@
   "description": "Connects Google Meet to StreamController for remote control of mic, camera, and reactions",
 
   "permissions": [
-    "storage",
-    "activeTab"
+    "storage"
   ],
 
   "host_permissions": [

@@ -56,11 +56,22 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadStatus() {
   try {
+    console.log('[Popup] Requesting status from background...');
     const response = await chrome.runtime.sendMessage({ type: 'get_status' });
+    console.log('[Popup] Received status:', response);
+
+    if (!response) {
+      console.error('[Popup] No response from background script');
+      return;
+    }
+
     currentStatus = response;
     updateUI();
   } catch (error) {
     console.error('[Popup] Error loading status:', error);
+    // Show error state in UI
+    connectionStatus.textContent = 'Error loading status';
+    connectionIndicator.classList.add('error');
   }
 }
 
@@ -69,8 +80,11 @@ async function loadStatus() {
  */
 function updateUI() {
   if (!currentStatus) {
+    console.log('[Popup] No current status - skipping UI update');
     return;
   }
+
+  console.log('[Popup] Updating UI with status:', currentStatus);
 
   // Update connection status
   updateConnectionStatus(currentStatus.connectionState);
@@ -141,7 +155,10 @@ function updateConnectionStatus(state) {
  * Update meeting status display
  */
 function updateMeetingStatus(state) {
+  console.log('[Popup] Updating meeting status with state:', state);
+
   if (!state) {
+    console.log('[Popup] No state available - showing not in meeting');
     meetingStatus.textContent = 'Not in meeting';
     meetingStateSection.style.display = 'none';
     return;
@@ -149,7 +166,14 @@ function updateMeetingStatus(state) {
 
   if (state.in_meeting) {
     const meetingId = state.meeting_id || 'Unknown';
-    meetingStatus.textContent = `In meeting: ${meetingId}`;
+    const meetingName = state.meeting_name || meetingId;
+    const participantCount = state.participant_count || 0;
+
+    console.log('[Popup] In meeting:', { meetingId, meetingName, participantCount });
+
+    meetingStatus.textContent = participantCount > 0
+      ? `In meeting (${participantCount} participants)`
+      : `In meeting: ${meetingName}`;
     meetingStateSection.style.display = 'block';
 
     // Update state indicators
@@ -157,6 +181,7 @@ function updateMeetingStatus(state) {
     updateStateIndicator(cameraState, state.camera_enabled, 'ON', 'OFF');
     updateStateIndicator(handState, state.hand_raised, 'Raised', 'Lowered');
   } else {
+    console.log('[Popup] Not in meeting (in_meeting =', state.in_meeting, ')');
     meetingStatus.textContent = 'Not in meeting';
     meetingStateSection.style.display = 'none';
   }

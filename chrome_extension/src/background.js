@@ -223,46 +223,61 @@ function handleMessage(message, sender, sendResponse) {
       // Update state from content script
       if (!sender.tab) {
         console.error('[Google Meet Bridge Background] Received message that did not come from a tab');
-        return;
+        return false;
       }
 
-      // Update tab state in manager (async)
-      tabStateManager.updateTabState(sender.tab.id, message.state);
-      break;
+      // Update tab state in manager (async, but don't wait for response)
+      tabStateManager.updateTabState(sender.tab.id, message.state).catch(err => {
+        console.error('[Google Meet Bridge Background] Error updating tab state:', err);
+      });
+      return false; // No async response needed
 
     case 'get_status':
       // Send status to popup (async)
       (async () => {
-        const currentState = await tabStateManager.getCurrentState();
-        sendResponse({
-          connectionState: connectionState,
-          currentState: currentState,
-          settings: settings
-        });
+        try {
+          const currentState = await tabStateManager.getCurrentState();
+          console.log('[Google Meet Bridge Background] Sending status to popup:', {
+            connectionState,
+            currentState,
+            settings
+          });
+          sendResponse({
+            connectionState: connectionState,
+            currentState: currentState,
+            settings: settings
+          });
+        } catch (error) {
+          console.error('[Google Meet Bridge Background] Error getting status:', error);
+          sendResponse({
+            connectionState: 'error',
+            currentState: null,
+            settings: settings
+          });
+        }
       })();
       return true; // Keep channel open for async response
 
     case 'connect':
       connect();
       sendResponse({ success: true });
-      break;
+      return false;
 
     case 'disconnect':
       disconnect();
       sendResponse({ success: true });
-      break;
+      return false;
 
     case 'update_settings':
       settings = { ...settings, ...message.settings };
       saveSettings();
       sendResponse({ success: true });
-      break;
+      return false;
 
     default:
       console.warn('[Google Meet Bridge Background] Unknown message type:', message.type);
+      return false;
   }
-
-  return true; // Keep channel open for async response
 }
 
 /**

@@ -36,7 +36,6 @@ Chrome extension that connects Google Meet to StreamController, enabling control
 2. **Configure Extension**
    - Click the extension icon in Chrome toolbar
    - Verify settings (default: `127.0.0.1:8765`)
-   - Click "Connect to StreamController"
 
 3. **Approve Connection** (First Time)
    - Extension will request approval in StreamController
