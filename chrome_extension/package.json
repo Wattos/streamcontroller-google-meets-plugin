@@ -1,6 +1,6 @@
 {
   "name": "google-meet-streamcontroller-bridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connects Google Meet to StreamController for remote control of mic, camera, and reactions",
   "type": "module",
   "private": true,

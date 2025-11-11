@@ -1,6 +1,4 @@
-import threading
 from .GoogleMeetActionBase import GoogleMeetActionBase
-from .ImageManager import ImageMode
 from loguru import logger as log
 
 # Import gtk modules
@@ -28,27 +26,23 @@ class SendReaction(GoogleMeetActionBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.reaction = "thumbs_up"
 
-    def on_ready(self):
+    def compute_state(self) -> dict:
+        """Get current reaction selection from settings"""
         settings = self.get_settings()
-        self.reaction = settings.get("reaction", "thumbs_up")
+        reaction = settings.get("reaction", "thumbs_up")
+        return {"reaction": reaction}
 
-        """Called when action is ready"""
-        # Set icon based on selected reaction
-        self.update_icon()
+    def render_state(self, state: dict, connection_state: str):
+        """Render reaction button based on selected reaction"""
+        reaction = state.get("reaction", "thumbs_up")
+        self.reaction = reaction  # Update instance variable for on_key_down
 
-    def update_icon(self):
-        """Update button icon based on selected reaction"""
-        reaction_name = self.reaction
-
-        if not self.get_connected() or not self.get_in_meeting():
-            # Show grayed-out reaction icon when disconnected
-            disconnected_img = self.get_image(f"reaction_{self.reaction}", ImageMode.DISABLED)
-            self.set_media(image=disconnected_img, size=0.8)
-            return
-
-        img = self.get_image(f"reaction_{reaction_name}")
-        self.set_media(image=img, size=0.8)
+        # Get reaction image
+        img = self.get_image(f"reaction_{reaction}", connection_state)
+        if img:
+            self.set_media(image=img, size=0.8)
 
     def on_key_down(self):
         """Called when button is pressed"""
@@ -110,9 +104,5 @@ class SendReaction(GoogleMeetActionBase):
             settings["reaction"] = self.reaction
             self.set_settings(settings)
 
-            # Update icon
-            self.update_icon()
-    
-    def on_tick(self):
-        """Called periodically to update state"""
-        self.update_icon()
+            # Force state update to re-render with new reaction
+            self.update_state()

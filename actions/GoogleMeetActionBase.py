@@ -33,6 +33,9 @@ class GoogleMeetActionBase(ActionBase):
         # Track approval UI rows
         self.approval_rows = []
 
+        # State caching for preventing unnecessary re-renders
+        self._cached_state = None
+
     def get_connected(self) -> bool:
         """Check if extension is connected"""
         try:
@@ -333,15 +336,113 @@ class GoogleMeetActionBase(ActionBase):
     # Image Access (delegates to ImageManager)
     # ========================================
 
-    def get_image(self, name: str, mode: ImageMode = ImageMode.REGULAR):
+    def get_image(self, name: str, connection_state: str = None, mode: ImageMode = None):
         """
         Get a preloaded image from ImageManager.
 
         Args:
             name: Image name (e.g., "mic_on", "reaction_thumbs_up")
+            connection_state: Connection state ("connected", "disconnected", "not_in_meeting")
+                             If provided, automatically determines mode
             mode: ImageMode.REGULAR (color) or ImageMode.DISABLED (grayscale)
+                 If connection_state is provided, this is ignored
 
         Returns:
             PIL Image object or None if not found
         """
+        # If connection_state is provided, determine mode automatically
+        if connection_state is not None:
+            if connection_state in ["disconnected", "not_in_meeting"]:
+                mode = ImageMode.DISABLED
+            else:
+                mode = ImageMode.REGULAR
+        # If mode is still None, default to REGULAR
+        elif mode is None:
+            mode = ImageMode.REGULAR
+
         return ImageManager.get_image(name, mode)
+
+    # ========================================
+    # Template Method Pattern for State Management
+    # ========================================
+
+    def compute_state(self) -> dict:
+        """
+        Compute action-specific state.
+        Child classes override this to add their specific state data.
+
+        Returns:
+            Dictionary with action-specific state (empty by default)
+        """
+        return {}
+
+    def render_state(self, state: dict, connection_state: str):
+        """
+        Render the action based on current state.
+        Child classes must implement this to define their rendering logic.
+
+        Args:
+            state: Full state dictionary including connection_state and action-specific state
+            connection_state: Current connection state ("connected", "disconnected", "not_in_meeting")
+        """
+        raise NotImplementedError("Child classes must implement render_state()")
+
+    def update_state(self):
+        """
+        Update action state and render if changed.
+        This method is called by on_tick() and handles:
+        1. Getting connection/meeting status
+        2. Calling compute_state() for action-specific state
+        3. Comparing with cached state
+        4. Calling render_state() if state changed
+        """
+        try:
+            # Get connection and meeting status
+            connected = self.get_connected()
+            in_meeting = self.get_in_meeting()
+
+            # Determine connection state
+            if not connected:
+                connection_state = "disconnected"
+            elif not in_meeting:
+                connection_state = "not_in_meeting"
+            else:
+                connection_state = "connected"
+
+            # Create base state
+            base_state = {
+                "connection_state": connection_state,
+                "connected": connected,
+                "in_meeting": in_meeting
+            }
+
+            # Get action-specific state from child class
+            child_state = self.compute_state()
+
+            # Merge states
+            full_state = {**base_state, **child_state}
+
+            # Compare with cached state
+            if full_state != self._cached_state:
+                # State has changed, render it
+                self.render_state(full_state, connection_state)
+                # Update cache
+                self._cached_state = full_state
+
+        except Exception as e:
+            log.error(f"Error updating state: {e}")
+
+    def on_ready(self):
+        """
+        Called when action becomes ready (e.g., page loads).
+        Clears cached state to force a fresh render.
+        """
+        self._cached_state = None
+        self.update_state()
+
+    def on_tick(self):
+        """
+        Called periodically by StreamController.
+        Updates the action state.
+        """
+        self.update_state()
